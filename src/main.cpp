@@ -18,7 +18,7 @@ static void onChangeRed(int i,void* sd){
 	SignDetection* det = (SignDetection*)sd;
 	cv::Scalar s_lower(hue_l, value_l, saturation_l);
 	cv::Scalar s_higher(hue_h, value_h, saturation_h);
-	det->setColorBound((struct color_bound){"RED", s_lower, s_higher});
+	det->setColorBound((struct color_bound){RED, "RED", s_lower, s_higher});
 	det->parse();
 }
 
@@ -35,7 +35,7 @@ static void onChangeGreen(int i,void* sd){
 	SignDetection* det = (SignDetection*)sd;
 	cv::Scalar s_lower(hue_l, value_l, saturation_l);
 	cv::Scalar s_higher(hue_h, value_h, saturation_h);
-	(*det).setColorBound((struct color_bound){"GREEN", s_lower, s_higher});
+	(*det).setColorBound((struct color_bound){GREEN,"GREEN", s_lower, s_higher});
 	(*det).parse();
 }
 
@@ -52,7 +52,7 @@ static void onChangeBlue(int i, void* sd){
 	SignDetection* det = (SignDetection*)sd;
 	cv::Scalar s_lower(hue_l, value_l, saturation_l);
 	cv::Scalar s_higher(hue_h, value_h, saturation_h);
-	(*det).setColorBound((struct color_bound){"BLUE", s_lower, s_higher});
+	(*det).setColorBound((struct color_bound){BLUE,"BLUE", s_lower, s_higher});
 	(*det).parse();
 }
 
@@ -69,7 +69,7 @@ static void onChangeYellow(int i, void* sd){
 	SignDetection* det = (SignDetection*)sd;
 	cv::Scalar s_lower(hue_l, value_l, saturation_l);
 	cv::Scalar s_higher(hue_h, value_h, saturation_h);
-	(*det).setColorBound((struct color_bound){"YELLOW", s_lower, s_higher});
+	(*det).setColorBound((struct color_bound){YELLOW,"YELLOW", s_lower, s_higher});
 	(*det).parse();
 }
 	

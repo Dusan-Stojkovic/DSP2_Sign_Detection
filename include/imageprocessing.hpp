@@ -13,9 +13,18 @@ enum shape
 	SQUARE
 };
 
+typedef enum 
+{
+	RED = 0,
+	GREEN = 1,
+	YELLOW = 2,
+	BLUE = 3
+}color;
+
 struct color_bound
 {
-	std::string color;
+	color c;
+	std::string col;
 	cv::Scalar lower_b;
 	cv::Scalar upper_b;
 };
@@ -32,13 +41,14 @@ private:
 	cv::Mat m_im;
 	std::vector<struct color_bound> m_cb;
 	std::vector<cv::Mat1b> m_masks;
-	std::vector<cv::Mat> m_contour_im;
+	cv::Mat m_contours_im;
 
 	void init_params();
 	void mask_im(cv::Mat);
 	void errode_masks();
 	void find_contour_masked(cv::Mat im);
 	void approximate_shape(cv::Mat im, std::vector<std::vector<cv::Point>>);
+	void perspective_transform(cv::Mat, std::vector<cv::Point>, std::string);
 };
 
 #endif
