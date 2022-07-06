@@ -5,22 +5,18 @@ void SignDetection::init_params()
 	//define default color bounds
 	m_cb.push_back((struct color_bound){
 		RED,
-		"RED",
 		cv::Scalar(165, 50, 129),
 		cv::Scalar(180, 255, 255)});
 	m_cb.push_back((struct color_bound){
 		GREEN,
-		"GREEN",
 		cv::Scalar(35, 50, 50),
 		cv::Scalar(75, 255, 255)});
 	m_cb.push_back((struct color_bound){
 		YELLOW,
-		"YELLOW",
 		cv::Scalar(27, 75, 75),
 		cv::Scalar(33, 50, 50)});
 	m_cb.push_back((struct color_bound){
 		BLUE,
-		"BLUE",
 		cv::Scalar(84, 50, 50),
 		cv::Scalar(130, 255, 255)});
 }
@@ -41,7 +37,7 @@ void SignDetection::setColorBound(struct color_bound cb)
 	std::vector<struct color_bound>::iterator it;
 	for(it = m_cb.begin(); it != m_cb.end(); ++it)
 	{
-		if(cb.col == (*it).col)
+		if(cb.c == (*it).c)
 		{
 			*it = cb;
 			break;
@@ -59,26 +55,28 @@ void SignDetection::parse()
 
 	mask_im(hsv_im);
 	
-	int i = 0;
-	std::vector<cv::Mat1b>::iterator mask_it;
-	for(mask_it = m_masks.begin(); mask_it != m_masks.end(); mask_it++)
-	{
-		cv::imshow("hsv_" + m_cb[i++].col, *mask_it);
-	}
+#if DISPLAY_MASK_R
+	cv::imshow("hsv_red", m_masks[RED]);
+#endif
+#if DISPLAY_MASK_G
+	cv::imshow("hsv_green", m_masks[GREEN]);
+#endif
+#if DISPLAY_MASK_B
+	cv::imshow("hsv_blue", m_masks[BLUE]);
+#endif
+#if DISPLAY_MASK_Y
+	cv::imshow("hsv_yellow", m_masks[YELLOW]);
+#endif
 
 	errode_masks();
-	//cv::imshow("erroded_r", m_masks[0]);
 
-	find_contour_masked(hsv_im);
+#if DISPLAY_ERROSION
+	cv::imshow("erroded_r", m_masks[0]);
+#endif
 
 	//approximate shape of contour
-	
-	//i = 0;
-	//std::vector<cv::Mat>::iterator contour_it;
-	//for(contour_it = m_contour_im.begin(); contour_it != m_contour_im.end(); contour_it++)
-	//{
-	//	//cv::imshow("contours" + m_cb[i++].color, *contour_it);
-	//}
+	find_contour_masked(hsv_im);
+
 	cv::imshow("contours", m_contours_im);
 
 	//clean up retard!

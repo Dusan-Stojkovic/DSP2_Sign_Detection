@@ -6,6 +6,14 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
 
+#define DISPLAY_ERROSION 0
+#define DISPLAY_MASK_R 1
+#define DISPLAY_MASK_G 0
+#define DISPLAY_MASK_B 0
+#define DISPLAY_MASK_Y 0
+#define DISPLAY_CONTOURS 1
+#define DISPLAY_PT 0
+
 enum shape
 {
 	CIRCLE,
@@ -24,7 +32,6 @@ typedef enum
 struct color_bound
 {
 	color c;
-	std::string col;
 	cv::Scalar lower_b;
 	cv::Scalar upper_b;
 };
