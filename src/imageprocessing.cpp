@@ -1,77 +1,160 @@
 #include "imageprocessing.hpp"
 
-SignDetection::SignDetection()
+void SignDetection::init_params()
 {
 	//define default color bounds
 	m_cb.push_back((struct color_bound){
-		RED,
-		cv::Scalar(165, 50, 50),
+		"RED",
+		cv::Scalar(165, 50, 129),
 		cv::Scalar(180, 255, 255)});
 	m_cb.push_back((struct color_bound){
-		GREEN,
+		"GREEN",
 		cv::Scalar(35, 50, 50),
 		cv::Scalar(75, 255, 255)});
 	m_cb.push_back((struct color_bound){
-		YELLOW,
+		"YELLOW",
 		cv::Scalar(27, 75, 75),
 		cv::Scalar(33, 50, 50)});
 	m_cb.push_back((struct color_bound){
-		BLUE,
+		"BLUE",
 		cv::Scalar(84, 50, 50),
 		cv::Scalar(130, 255, 255)});
 }
 
-void SignDetection::parse(cv::Mat& im)
+SignDetection::SignDetection()
+{
+	init_params();
+}
+
+SignDetection::SignDetection(cv::Mat im)
+{
+	init_params();
+	m_im = im;
+}
+
+void SignDetection::setColorBound(struct color_bound cb)
+{
+	std::vector<struct color_bound>::iterator it;
+	for(it = m_cb.begin(); it != m_cb.end(); ++it)
+	{
+		if(cb.color == (*it).color)
+		{
+			*it = cb;
+			break;
+		}
+	}
+}
+
+void SignDetection::parse()
 {
 	//hsv transform
 	cv::Mat hsv_im;
-	cv::cvtColor(im, hsv_im, cv::COLOR_BGR2HSV);
+	cv::cvtColor(m_im, hsv_im, cv::COLOR_BGR2HSV);
 	cv::imshow("hsv test", hsv_im);
 	cv::moveWindow("hsv test", 0, 0);
 
 	mask_im(hsv_im);
-	cv::imshow("hsv_r", m_masks[0]);
+	
+	int i = 0;
+	std::vector<cv::Mat1b>::iterator mask_it;
+	for(mask_it = m_masks.begin(); mask_it != m_masks.end(); mask_it++)
+	{
+		cv::imshow("hsv_" + m_cb[i++].color, *mask_it);
+	}
 
 	errode_masks();
-	cv::imshow("erroded_r", m_masks[0]);
+	//cv::imshow("erroded_r", m_masks[0]);
 
-	//find contours
-	cv::Mat threshold_r = m_masks[0].clone();
-	std::vector<std::vector<cv::Point> > contours;
-	cv::threshold(threshold_r, threshold_r, 128, 255, cv::THRESH_BINARY);
-	cv::Mat contourOutput = threshold_r.clone();
-	cv::findContours(contourOutput, contours, cv::RETR_LIST, cv::CHAIN_APPROX_NONE);
-
-	//Draw the contours
-    cv::Mat contourImage(hsv_im.size(), CV_8UC3, cv::Scalar(0,0,0));
-
-    cv::Scalar colors[3];
-    colors[0] = cv::Scalar(0, 0, 255);
-    colors[1] = cv::Scalar(0, 255, 0);
-    colors[2] = cv::Scalar(255, 0, 0);
-    for (size_t idx = 0; idx < contours.size(); idx++) {
-        cv::drawContours(contourImage, contours, idx, colors[idx % 3]);
-    }
-
-	cv::imshow("contours", contourImage);
+	find_contour_masked(hsv_im);
 
 	//approximate shape of contour
-	std::vector<cv::Point> exLeft;
-	std::vector<cv::Point> exRight;
-	std::vector<cv::Point> exTop;
-	std::vector<cv::Point> exBott;
+	
+	i = 0;
+	std::vector<cv::Mat>::iterator contour_it;
+	for(contour_it = m_contour_im.begin(); contour_it != m_contour_im.end(); contour_it++)
+	{
+		//cv::imshow("contours" + m_cb[i++].color, *contour_it);
+	}
 
+	//clean up retard!
+	m_masks.clear();
+	m_contour_im.clear();
+}
+
+void SignDetection::mask_im(cv::Mat im)
+{
+	//apply masks
+	std::vector<struct color_bound>::iterator cb_it;
+	for(cb_it = m_cb.begin(); cb_it != m_cb.end(); ++cb_it)
+	{
+		cv::Mat1b mask;
+		cv::inRange(im, (*cb_it).lower_b, (*cb_it).upper_b, mask);
+		m_masks.push_back(mask);
+	}
+}
+
+void SignDetection::errode_masks()
+{
+	//apply errosion
+	int n = 3;
+	cv::Mat kernel(n, n, CV_8UC1, 1);
+	std::vector<cv::Mat1b>::iterator mask_it;
+	for(mask_it = m_masks.begin(); mask_it != m_masks.end(); ++mask_it)
+	{
+		cv::Mat1b erroded;
+		cv::erode(*mask_it, *mask_it, kernel);
+	}
+}
+
+void SignDetection::find_contour_masked(cv::Mat im)
+{
+	//find contours
+  	cv::Scalar colors[3];
+  	colors[0] = cv::Scalar(0, 0, 255);
+  	colors[1] = cv::Scalar(0, 255, 0);
+  	colors[2] = cv::Scalar(255, 0, 0);
+	std::vector<cv::Mat1b>::iterator mask_it;
+	for(mask_it = m_masks.begin(); mask_it != m_masks.end(); ++mask_it)
+	{
+		std::vector<std::vector<cv::Point>> contours;
+		cv::Mat threshold = (*mask_it).clone();
+		cv::threshold(threshold, threshold, 128, 255, cv::THRESH_BINARY);
+		cv::Mat contourOutput = threshold.clone();
+		cv::findContours(contourOutput, contours, cv::RETR_LIST, cv::CHAIN_APPROX_NONE);
+
+		//Draw the contours
+    	cv::Mat contourImage(im.size(), CV_8UC3, cv::Scalar(0,0,0));
+
+    	for (size_t idx = 0; idx < contours.size(); idx++) {
+    	    cv::drawContours(contourImage, contours, idx, colors[idx % 3]);
+    	}
+
+		approximate_shape(im, contours);
+		m_contour_im.push_back(contourImage);
+	}
+}
+
+//TODO improve this function for better curve analysis
+void SignDetection::approximate_shape(cv::Mat im, std::vector<std::vector<cv::Point>> contours)
+{
+	//approximate shape of contour
 	int order = 0;
 	double arclen = 0;
 	double epsilon = 0;
 	std::vector<std::vector<cv::Point>>::iterator contour;
 	std::vector<cv::Point> approx_curve;
+	int i = 0;
 	for(contour = contours.begin(); contour != contours.end(); ++contour)
 	{ 
 		arclen = cv::arcLength((*contour), true);
 		epsilon = 0.01*arclen;
 		cv::approxPolyDP(*contour, approx_curve, epsilon, true);
 		order = approx_curve.size();
+		std::vector<cv::Point> exLeft;
+		std::vector<cv::Point> exRight;
+		std::vector<cv::Point> exTop;
+		std::vector<cv::Point> exBott;
+
 		if(order > 12 && order < 17)
 		{
 			std::cout << "Red circle!\n";
@@ -157,35 +240,7 @@ void SignDetection::parse(cv::Mat& im)
 			cv::Mat warpedImg;
 			cv::warpPerspective(im,warpedImg,M,warped_image_size);
 
-			cv::imshow("Warped",warpedImg);
+			cv::imshow("Warped"+std::to_string(i++),warpedImg);
 		}
-
-	}
-	
-	cv::waitKey();
-}
-
-void SignDetection::mask_im(cv::Mat im)
-{
-	//apply masks
-	std::vector<struct color_bound>::iterator cb_it;
-	for(cb_it = m_cb.begin(); cb_it != m_cb.end(); ++cb_it)
-	{
-		cv::Mat1b mask;
-		cv::inRange(im, (*cb_it).lower_b, (*cb_it).upper_b, mask);
-		m_masks.push_back(mask);
-	}
-}
-
-void SignDetection::errode_masks()
-{
-	//apply errosion
-	int n = 5;
-	cv::Mat kernel(n, n, CV_8UC1, 1);
-	std::vector<cv::Mat1b>::iterator mask_it;
-	for(mask_it = m_masks.begin(); mask_it != m_masks.end(); ++mask_it)
-	{
-		cv::Mat1b erroded;
-		cv::erode(*mask_it, *mask_it, kernel);
 	}
 }
