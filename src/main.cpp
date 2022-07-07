@@ -30,6 +30,50 @@ static void onChangeYellow(int i, void* sd);
 	
 void imageProcessingThread(cv::Mat im);
 
+cv:: Mat resize(long size, cv::Mat image){
+
+	cv::Mat resized_image;
+	
+	if(size >= 750000){
+		int scale_per = 15;
+		int w = image.size().width * scale_per / 100;
+		int h = image.size().height * scale_per / 100;
+		cv::resize(image, resized_image, cv::Size((int)w,(int)h), cv::INTER_CUBIC);
+	}
+	else if (size < 750000 && size >= 650000)
+	{
+		int scale_per = 25;
+		int w = image.size().width * scale_per / 100;
+		int h = image.size().height * scale_per / 100;
+		cv::resize(image, resized_image, cv::Size((int)w,(int)h), cv::INTER_CUBIC);
+	}
+	else if (size < 650000 && size > 500000)
+	{
+		int scale_per = 35;
+		int w = image.size().width * scale_per / 100;
+		int h = image.size().height * scale_per / 100;
+		cv::resize(image, resized_image, cv::Size((int)w,(int)h), cv::INTER_CUBIC);
+	}
+	else if (size < 500000 && size >= 300000)
+	{
+		int scale_per = 50;
+		int w = image.size().width * scale_per / 100;
+		int h = image.size().height * scale_per / 100;
+		cv::resize(image, resized_image, cv::Size((int)w,(int)h), cv::INTER_CUBIC);
+	}
+	else if (size < 300000 && size >= 150000){
+		int scale_per = 70;
+		int w = image.size().width * scale_per / 100;
+		int h = image.size().height * scale_per / 100;
+		cv::resize(image, resized_image, cv::Size((int)w,(int)h), cv::INTER_CUBIC);
+	}
+	else{
+		resized_image = image;
+	}
+
+	return resized_image;
+}
+
 int main()
 {
 	//Variable setup
@@ -38,12 +82,12 @@ int main()
 
 	//Load image
 	image = cv::imread("data/jednosmerna.png");
-
+	long size;
 	//Resize for better performance
-	int scale_per = 15;
-	int w = image.size().width * scale_per / 100;
-	int h = image.size().height * scale_per / 100;
-	cv::resize(image, resized_image, cv::Size((int)w,(int)h), cv::INTER_CUBIC);
+	size = image.size().width * image.size().height;
+
+	resized_image = resize(size, image);
+	
 
 	//Display result
 	//cv::imshow("resized test", resized_image);

@@ -118,7 +118,7 @@ void SignDetection::find_contour_masked(cv::Mat im)
 		cv::Mat threshold = (*mask_it).clone();
 		cv::threshold(threshold, threshold, 128, 255, cv::THRESH_BINARY);
 		cv::Mat contourOutput = threshold.clone();
-		cv::findContours(contourOutput, contours, cv::RETR_LIST, cv::CHAIN_APPROX_NONE);
+		cv::findContours(contourOutput, contours, cv::RETR_LIST, cv::CHAIN_APPROX_SIMPLE);
 
 		//Draw the contours
     	for (size_t idx = 0; idx < contours.size(); idx++) {
@@ -159,6 +159,7 @@ void SignDetection::approximate_shape(cv::Mat im, std::vector<std::vector<cv::Po
 			perspective_transform(im, *contour);	
 #endif
 		}
+		
 	}
 }
 
