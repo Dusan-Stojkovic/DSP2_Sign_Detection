@@ -75,13 +75,14 @@ void SignDetection::parse()
 #endif
 
 	errode_masks();
+	//dilate_masks();
 
 #if DISPLAY_ERROSION
 	cv::imshow("erroded_r", m_masks[0]);
 #endif
 
 	//approximate shape of contour
-	find_contour_masked(hsv_im);
+	find_contour_masked(m_im);
 
 	cv::imshow("contours", m_contours_im);
 
@@ -103,8 +104,21 @@ void SignDetection::mask_im(cv::Mat im)
 void SignDetection::errode_masks()
 {
 	//apply errosion
-	int n = 3;
+	int n = 5;
 	cv::Mat kernel(n, n, CV_8UC1, 1);
+	std::vector<cv::Mat1b>::iterator mask_it;
+	for(mask_it = m_masks.begin(); mask_it != m_masks.end(); ++mask_it)
+	{
+		cv::Mat1b erroded;
+		cv::erode(*mask_it, *mask_it, kernel);
+	}
+}
+
+void SignDetection::dilate_masks()
+{
+	//apply dilation
+	int n = 3;
+	cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3,3));
 	std::vector<cv::Mat1b>::iterator mask_it;
 	for(mask_it = m_masks.begin(); mask_it != m_masks.end(); ++mask_it)
 	{
@@ -130,11 +144,11 @@ void SignDetection::find_contour_masked(cv::Mat im)
 		cv::Mat threshold = (*mask_it).clone();
 		cv::threshold(threshold, threshold, 128, 255, cv::THRESH_BINARY);
 		cv::Mat contourOutput = threshold.clone();
-		cv::findContours(contourOutput, contours, cv::RETR_LIST, cv::CHAIN_APPROX_SIMPLE);
+		cv::bitwise_and(im, im, threshold);  // Update foreground with bitwise_and to extract real foreground
+		cv::findContours(contourOutput, contours, cv::RETR_LIST, cv::CHAIN_APPROX_NONE);
 
 		//Draw the contours
     	for (size_t idx = 0; idx < contours.size(); idx++) {
-			//TODO draw contours on one image!
     	    cv::drawContours(contourImage, contours, idx, colors[m_cb[i].c]);
     	}
 
@@ -178,45 +192,31 @@ void SignDetection::approximate_shape(cv::Mat im, std::vector<std::vector<cv::Po
 void SignDetection::perspective_transform(cv::Mat im, std::vector<cv::Point> approx_curve)
 {
 	//get corners of contours and perform perspective transformation
-	//cv::Point farL(im.cols, 0);
-	//cv::Point farR(0, 0);
-	//cv::Point farT(0, im.rows);
-	//cv::Point farB(0, 0);
+	//TODO crop Rect box to save img
+	
+	cv::Mat boxed_im = im.clone();
 
-	///std::vector<cv::Point> cnt;
-	//cnt = approx_curve;
-	//for (size_t j=0; j < cnt.size();j++){
-	//	cv::Point current = cnt[j];
-	//	if (current.x < farL.x){
-	//		farL = current;
-	//	}
-	//	if (current.x > farR.x){
-	//		farR = current;
-	//	}
-	//	if (current.y > farB.y){
-	//		farB = current;
-	//	}
-	//	if (current.y < farT.y){
-	//		farT = current;
-	//	}
-	//}
-
+	cv::Rect crop_box = cv::boundingRect(approx_curve);
 	cv::RotatedRect box = cv::minAreaRect(approx_curve);
-	cv::Point2f A, B, C, D;
-	A.x = box.center.x - ((box.size.width/2)*cos(box.angle)) - ((box.size.height/2)*sin(box.angle));
-	A.y = box.center.y - ((box.size.width/2)*sin(box.angle)) + ((box.size.height/2)*cos(box.angle));
-	B.x = box.center.x + ((box.size.width/2)*cos(box.angle)) - ((box.size.height/2)*sin(box.angle));
-	B.y = box.center.y + ((box.size.width/2)*sin(box.angle)) + ((box.size.height/2)*cos(box.angle));
-	C.x = box.center.x + ((box.size.width/2)*cos(box.angle)) + ((box.size.height/2)*sin(box.angle));
-	C.y = box.center.y + ((box.size.width/2)*sin(box.angle)) - ((box.size.height/2)*cos(box.angle));
-	D.x = box.center.x - ((box.size.width/2)*cos(box.angle)) + ((box.size.height/2)*sin(box.angle));
-	D.y = box.center.y - ((box.size.width/2)*sin(box.angle)) - ((box.size.height/2)*cos(box.angle));
+	cv::Point2f vertices[4];
+	box.points(vertices);
+	for (int i = 0; i < 4; i++)
+	{
+        line(boxed_im, vertices[i], vertices[(i+1)%4], cv::Scalar(0,255,0), 2);
+	}
+
+	line(boxed_im, cv::Point(crop_box.x, crop_box.y), cv::Point(crop_box.x + crop_box.width, crop_box.y), cv::Scalar(0,255,255), 2);
+	line(boxed_im, cv::Point(crop_box.x + crop_box.width, crop_box.y), cv::Point(crop_box.x + crop_box.width, crop_box.y + crop_box.height), cv::Scalar(0,255,255), 2);
+	line(boxed_im, cv::Point(crop_box.x + crop_box.width, crop_box.y + crop_box.height), cv::Point(crop_box.x, crop_box.y + crop_box.height), cv::Scalar(0,255,255), 2);
+	line(boxed_im, cv::Point(crop_box.x, crop_box.y + crop_box.height), cv::Point(crop_box.x, crop_box.y), cv::Scalar(0,255,255), 2);
+
+	cv::imshow("boxed", boxed_im);
 
 	std::vector<cv::Point2f> src;
-	src.push_back(B);
-	src.push_back(A);
-	src.push_back(D);
-	src.push_back(C);
+	src.push_back(vertices[0]);
+	src.push_back(vertices[1]);
+	src.push_back(vertices[2]);
+	src.push_back(vertices[3]);
 
 	float widthLT = sqrt((src[0].x - src[3].x)*(src[0].x - src[3].x) + (src[0].y - src[3].y)*(src[0].y - src[3].y));
 	float widthBR = sqrt((src[1].x - src[2].x)*(src[1].x - src[2].x) + (src[1].y - src[2].y)*(src[1].y - src[2].y));
@@ -240,7 +240,14 @@ void SignDetection::perspective_transform(cv::Mat im, std::vector<cv::Point> app
 	cv::Mat cropped_pt;
 	cv::warpPerspective(im,warpedImg,M,warped_image_size,cv::INTER_LINEAR);
 
-	cv::cvtColor(warpedImg, m_cropped_pt_im, cv::COLOR_HSV2BGR);
+	//TODO put these together
+	//cv::Mat threshold = (*mask_it).clone();
+	//cv::threshold(threshold, threshold, 128, 255, cv::THRESH_BINARY);
+	//cv::Mat contourOutput = threshold.clone();
+	//cv::bitwise_and(im, im, threshold);  // Update foreground with bitwise_and to extract real foreground
+
+	//cv::cvtColor(warpedImg, m_cropped_pt_im, cv::COLOR_HSV2BGR);
+	m_cropped_pt_im = warpedImg;
 	cropped_pt = m_cropped_pt_im.clone();
 	cv::imshow("Warped", cropped_pt);
 }

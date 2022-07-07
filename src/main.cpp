@@ -30,7 +30,7 @@ static void onChangeYellow(int i, void* sd);
 	
 void imageProcessingThread(SignDetection&);
 
-cv:: Mat resize(long size, cv::Mat image);
+cv::Mat resize(long size, cv::Mat image);
 
 int main()
 {
@@ -55,6 +55,7 @@ int main()
 	SignDetection det(resized_image);
 	std::thread t(imageProcessingThread, std::ref(det));
 
+	cv::Mat new_im;
 	std::vector<std::string> keyboard_input;
 	std::string word;
 	std::string delim = ">>";
@@ -86,9 +87,9 @@ int main()
 			cv::imwrite("res.png", s);
 		}
 		else if(keyboard_input[0] == "load")
-		{
+		{ 
 			//try to load selected im
-			cv::Mat new_im = cv::imread(keyboard_input[1]);
+			new_im = cv::imread(keyboard_input[1]);
 			if(new_im.rows == 0 || new_im.cols == 0)
 			{
 				std::cout << "imread failed: no such file or directory!\n";

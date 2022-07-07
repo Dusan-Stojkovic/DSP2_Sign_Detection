@@ -57,6 +57,7 @@ private:
 	void init_params();
 	void mask_im(cv::Mat);
 	void errode_masks();
+	void dilate_masks();
 	void find_contour_masked(cv::Mat im);
 	void approximate_shape(cv::Mat im, std::vector<std::vector<cv::Point>>, int);
 	void perspective_transform(cv::Mat, std::vector<cv::Point>);
