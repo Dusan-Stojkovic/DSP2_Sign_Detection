@@ -34,9 +34,21 @@ SignDetection::SignDetection(cv::Mat im)
 	m_im = im;
 }
 
+void SignDetection::setImParse(cv::Mat& im)
+{
+	m_im = im;
+	parse();
+}
+
 void SignDetection::setColorBound(struct color_bound cb)
 {
 	m_cb[cb.c] = cb;
+}
+
+cv::Mat SignDetection::getCroppedPT()
+{
+	std::cout << m_cropped_pt_im.size() <<std::endl;
+	return m_cropped_pt_im;
 }
 
 void SignDetection::parse()
@@ -245,14 +257,15 @@ void SignDetection::perspective_transform(cv::Mat im, std::vector<cv::Point> app
 
 	cv::Mat M = cv::getPerspectiveTransform(src,dst);
 
-	cv::Size warped_image_size = cv::Size(farR+15,farB+15); // +15 is for padding of the sign
+	cv::Size warped_image_size = cv::Size(farR+16,farB+16); // +15 is for padding of the sign
 
 	cv::Mat warpedImg;
+	cv::Mat cropped_pt;
 	cv::warpPerspective(im,warpedImg,M,warped_image_size);
 
-	cv::Mat rgb_im;
-	cv::cvtColor(warpedImg, rgb_im, cv::COLOR_HSV2BGR);
-	cv::imshow("Warped", rgb_im);
+	cv::cvtColor(warpedImg, m_cropped_pt_im, cv::COLOR_HSV2BGR);
+	cropped_pt = m_cropped_pt_im.clone();
+	cv::imshow("Warped", cropped_pt);
 }
 
 

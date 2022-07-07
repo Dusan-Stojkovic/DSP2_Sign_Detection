@@ -28,7 +28,7 @@ static void onChangeBlue(int i, void* sd);
 static void onChangeYellow(int i, void* sd);
 #endif
 	
-void imageProcessingThread(cv::Mat im);
+void imageProcessingThread(SignDetection&);
 
 cv:: Mat resize(long size, cv::Mat image){
 
@@ -81,8 +81,10 @@ int main()
 	cv::Mat image, resized_image;
 
 	//Load image
-	image = cv::imread("data/jednosmerna.png");
+	std::string loaded_im = "data/jednosmerna.png";
+	image = cv::imread(loaded_im);
 	long size;
+
 	//Resize for better performance
 	size = image.size().width * image.size().height;
 
@@ -91,32 +93,59 @@ int main()
 
 	//Display result
 	//cv::imshow("resized test", resized_image);
-	std::thread t(imageProcessingThread, resized_image);
+	//trackbars must spawn new thread
+	SignDetection det(resized_image);
+	std::thread t(imageProcessingThread, std::ref(det));
 
-	std::string keyboard_input;
-	//TODO trackbars must spawn new thread
+	std::vector<std::string> keyboard_input;
+	std::string word;
 	do
 	{
-		std::cin >> keyboard_input;
+		keyboard_input.clear();
+		do
+		{ 
+			std::cin >> word;
+			keyboard_input.push_back(word);
+		}while(word[word.size() - 1] != ';');
+	 	keyboard_input[keyboard_input.size() - 1] = word.substr(0, word.size() - 1);
 
 		//echo
-		std::cout << keyboard_input;
-
-		if(keyboard_input == "save")
+		for(int i = 0; i < keyboard_input.size(); i++)
 		{
-			//TODO write to file trackbar values 
+			std::cout << keyboard_input[i] << " ";
 		}
+		std::cout << "\n";
 
-	}while(keyboard_input != "quit");
+
+		if(keyboard_input[0] == "save")
+		{
+			//write to file trackbar values 
+			cv::Mat s = det.getCroppedPT();
+			//cv::imshow("test", s);
+			cv::imwrite("res.png", s);
+		}
+		else if(keyboard_input[0] == "load")
+		{
+			//try to load selected im
+			cv::Mat new_im = cv::imread(keyboard_input[1]);
+			if(new_im.rows == 0 || new_im.cols == 0)
+			{
+				std::cout << "imread failed: no such file or directory!\n";
+			}
+			else
+			{
+				std::cout << "image: " << keyboard_input[1] << " loaded. \n";
+				det.setImParse(new_im);
+			}
+		}
+	}while(keyboard_input[0] != "quit");
 
 	return 0;
 }
 
-void imageProcessingThread(cv::Mat im)
+void imageProcessingThread(SignDetection& det)
 {
 	//Do some image processing
-	SignDetection det(im);
-
 	det.parse();
 
 #if DRAW_T_HSV_R 
