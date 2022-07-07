@@ -135,7 +135,9 @@ int main()
 			else
 			{
 				std::cout << "image: " << keyboard_input[1] << " loaded. \n";
-				det.setImParse(new_im);
+				size = new_im.size().width * new_im.size().height;
+				resized_image = resize(size, new_im);
+				det.setImParse(resized_image);
 			}
 		}
 	}while(keyboard_input[0] != "quit");
