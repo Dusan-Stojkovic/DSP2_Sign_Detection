@@ -1,4 +1,5 @@
 
+#include <thread>
 #include <iostream>
 #include "imageprocessing.hpp"
 #include "opencv2/core/core.hpp"
@@ -27,6 +28,8 @@ static void onChangeBlue(int i, void* sd);
 static void onChangeYellow(int i, void* sd);
 #endif
 	
+void imageProcessingThread(cv::Mat im);
+
 int main()
 {
 	//Variable setup
@@ -44,9 +47,31 @@ int main()
 
 	//Display result
 	//cv::imshow("resized test", resized_image);
+	std::thread t(imageProcessingThread, resized_image);
 
+	std::string keyboard_input;
+	//TODO trackbars must spawn new thread
+	do
+	{
+		std::cin >> keyboard_input;
+
+		//echo
+		std::cout << keyboard_input;
+
+		if(keyboard_input == "save")
+		{
+			//TODO write to file trackbar values 
+		}
+
+	}while(keyboard_input != "quit");
+
+	return 0;
+}
+
+void imageProcessingThread(cv::Mat im)
+{
 	//Do some image processing
-	SignDetection det(resized_image);
+	SignDetection det(im);
 
 	det.parse();
 
@@ -99,24 +124,7 @@ int main()
 #endif
 
 	cv::waitKey(0);
-	std::string keyboard_input;
-	//TODO trackbars must spawn new thread
-	//do
-	//{
-	//	std::cin >> keyboard_input;
-
-	//	//echo
-	//	std::cout << keyboard_input;
-
-	//	if(keyboard_input == "save")
-	//	{
-	//		//TODO write to file trackbar values 
-	//	}
-
-	//}while(keyboard_input != "quit");
-
-	return 0;
-}
+} 
 
 static void onChangeRed(int i,void* sd){
 	int hue_l, value_l, saturation_l;
