@@ -30,8 +30,100 @@ static void onChangeYellow(int i, void* sd);
 	
 void imageProcessingThread(SignDetection&);
 
-cv:: Mat resize(long size, cv::Mat image){
+cv:: Mat resize(long size, cv::Mat image);
 
+int main()
+{
+	//Variable setup
+	std::cout << "Sign image processing..\n";
+	cv::Mat image, resized_image;
+
+	//Load image
+	std::string loaded_im = "data/jednosmerna.png";
+	image = cv::imread(loaded_im);
+	long size;
+
+	//Resize for better performance
+	size = image.size().width * image.size().height;
+
+	resized_image = resize(size, image);
+	
+
+	//Display result
+	//cv::imshow("resized test", resized_image);
+	//trackbars must spawn new thread
+	SignDetection det(resized_image);
+	std::thread t(imageProcessingThread, std::ref(det));
+
+	std::vector<std::string> keyboard_input;
+	std::string word;
+	std::string delim = ">>";
+	std::cout << "Command REPL started. Write help for detalis.\n";
+	do
+	{
+		keyboard_input.clear();
+		//std::cout << delim;
+		do
+		{ 
+			std::cin >> word;
+			keyboard_input.push_back(word);
+		}while(word[word.size() - 1] != ';');
+	 	keyboard_input[keyboard_input.size() - 1] = word.substr(0, word.size() - 1);
+
+		//echo
+		for(int i = 0; i < keyboard_input.size(); i++)
+		{
+			std::cout << keyboard_input[i] << " ";
+		}
+		std::cout << "\n";
+
+
+		if(keyboard_input[0] == "save")
+		{
+			//write to file trackbar values 
+			cv::Mat s = det.getCroppedPT();
+			//cv::imshow("test", s);
+			cv::imwrite("res.png", s);
+		}
+		else if(keyboard_input[0] == "load")
+		{
+			//try to load selected im
+			cv::Mat new_im = cv::imread(keyboard_input[1]);
+			if(new_im.rows == 0 || new_im.cols == 0)
+			{
+				std::cout << "imread failed: no such file or directory!\n";
+			}
+			else
+			{
+				std::cout << "image: " << keyboard_input[1] << " loaded. \n";
+				size = new_im.size().width * new_im.size().height;
+				resized_image = resize(size, new_im);
+				det.setImParse(resized_image);
+			}
+		}
+		else if(keyboard_input[0] == "help")
+		{
+			std::cout << "List of commands:\n"
+					  << "save - save extracted sign from image.\n"
+					  << "quit - exit app.\n"
+					  << "load path/to/im.png - read image from file.\n";
+		}
+		else if(keyboard_input[0] == "display")
+		{
+			if(keyboard_input[1] == "t_red")
+			{
+				//TODO show red trackbars
+				std::cout << "Not implemented yet.\n";
+			}
+		}
+	}while(keyboard_input[0] != "quit");
+
+	return 0;
+}
+
+
+cv:: Mat resize(long size, cv::Mat image)
+{
 	cv::Mat resized_image;
 	
 	if(size >= 750000){
@@ -72,77 +164,6 @@ cv:: Mat resize(long size, cv::Mat image){
 	}
 
 	return resized_image;
-}
-
-int main()
-{
-	//Variable setup
-	std::cout << "Sign image processing..\n";
-	cv::Mat image, resized_image;
-
-	//Load image
-	std::string loaded_im = "data/jednosmerna.png";
-	image = cv::imread(loaded_im);
-	long size;
-
-	//Resize for better performance
-	size = image.size().width * image.size().height;
-
-	resized_image = resize(size, image);
-	
-
-	//Display result
-	//cv::imshow("resized test", resized_image);
-	//trackbars must spawn new thread
-	SignDetection det(resized_image);
-	std::thread t(imageProcessingThread, std::ref(det));
-
-	std::vector<std::string> keyboard_input;
-	std::string word;
-	do
-	{
-		keyboard_input.clear();
-		do
-		{ 
-			std::cin >> word;
-			keyboard_input.push_back(word);
-		}while(word[word.size() - 1] != ';');
-	 	keyboard_input[keyboard_input.size() - 1] = word.substr(0, word.size() - 1);
-
-		//echo
-		for(int i = 0; i < keyboard_input.size(); i++)
-		{
-			std::cout << keyboard_input[i] << " ";
-		}
-		std::cout << "\n";
-
-
-		if(keyboard_input[0] == "save")
-		{
-			//write to file trackbar values 
-			cv::Mat s = det.getCroppedPT();
-			//cv::imshow("test", s);
-			cv::imwrite("res.png", s);
-		}
-		else if(keyboard_input[0] == "load")
-		{
-			//try to load selected im
-			cv::Mat new_im = cv::imread(keyboard_input[1]);
-			if(new_im.rows == 0 || new_im.cols == 0)
-			{
-				std::cout << "imread failed: no such file or directory!\n";
-			}
-			else
-			{
-				std::cout << "image: " << keyboard_input[1] << " loaded. \n";
-				size = new_im.size().width * new_im.size().height;
-				resized_image = resize(size, new_im);
-				det.setImParse(resized_image);
-			}
-		}
-	}while(keyboard_input[0] != "quit");
-
-	return 0;
 }
 
 void imageProcessingThread(SignDetection& det)

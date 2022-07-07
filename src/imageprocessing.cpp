@@ -178,90 +178,67 @@ void SignDetection::approximate_shape(cv::Mat im, std::vector<std::vector<cv::Po
 void SignDetection::perspective_transform(cv::Mat im, std::vector<cv::Point> approx_curve)
 {
 	//get corners of contours and perform perspective transformation
-	std::vector<cv::Point> exLeft;
-	std::vector<cv::Point> exRight;
-	std::vector<cv::Point> exTop;
-	std::vector<cv::Point> exBott;
+	//cv::Point farL(im.cols, 0);
+	//cv::Point farR(0, 0);
+	//cv::Point farT(0, im.rows);
+	//cv::Point farB(0, 0);
 
-	cv::Point tmpLeft;
-	cv::Point tmpRight;
-	cv::Point tmpTop;
-	cv::Point tmpBott;
-	tmpLeft.x = 5000;
-	tmpRight.x = -5000;
-	tmpBott.y = -5000;
-	tmpTop.y = 5000;
+	///std::vector<cv::Point> cnt;
+	//cnt = approx_curve;
+	//for (size_t j=0; j < cnt.size();j++){
+	//	cv::Point current = cnt[j];
+	//	if (current.x < farL.x){
+	//		farL = current;
+	//	}
+	//	if (current.x > farR.x){
+	//		farR = current;
+	//	}
+	//	if (current.y > farB.y){
+	//		farB = current;
+	//	}
+	//	if (current.y < farT.y){
+	//		farT = current;
+	//	}
+	//}
 
-	std::vector<cv::Point> cnt;
-	cnt = approx_curve;
-	for (size_t j=0; j < cnt.size();j++){
-		cv::Point current = cnt[j];
-		if (current.x < tmpLeft.x){
-			tmpLeft = current;
-		}
-		if (current.x > tmpRight.x){
-			tmpRight = current;
-		}
-		if (current.y > tmpBott.y){
-			tmpBott = current;
-		}
-		if (current.y < tmpTop.y){
-			tmpTop = current;
-		}
-	}
-	exLeft.push_back(tmpLeft);
-	exRight.push_back(tmpRight);
-	exTop.push_back(tmpTop);
-	exBott.push_back(tmpBott);
+	cv::RotatedRect box = cv::minAreaRect(approx_curve);
+	cv::Point2f A, B, C, D;
+	A.x = box.center.x - ((box.size.width/2)*cos(box.angle)) - ((box.size.height/2)*sin(box.angle));
+	A.y = box.center.y - ((box.size.width/2)*sin(box.angle)) + ((box.size.height/2)*cos(box.angle));
+	B.x = box.center.x + ((box.size.width/2)*cos(box.angle)) - ((box.size.height/2)*sin(box.angle));
+	B.y = box.center.y + ((box.size.width/2)*sin(box.angle)) + ((box.size.height/2)*cos(box.angle));
+	C.x = box.center.x + ((box.size.width/2)*cos(box.angle)) + ((box.size.height/2)*sin(box.angle));
+	C.y = box.center.y + ((box.size.width/2)*sin(box.angle)) - ((box.size.height/2)*cos(box.angle));
+	D.x = box.center.x - ((box.size.width/2)*cos(box.angle)) + ((box.size.height/2)*sin(box.angle));
+	D.y = box.center.y - ((box.size.width/2)*sin(box.angle)) - ((box.size.height/2)*cos(box.angle));
 
-
-	int farL = exLeft[0].x;
-	int farR = exRight[0].x;
-	int farT = exTop[0].y;
-	int farB = exBott[0].y;
-	
-	for(int i = 0; i < exLeft.size();i++){
-		if(farL > exLeft[i].x){
-			farL = exLeft[i].x;
-		}
-	}
-	for(int i = 0; i < exRight.size();i++){
-		if(farR < exRight[i].x){
-			farR = exRight[i].x;
-		}
-	}
-	for(int i = 0; i < exTop.size();i++){
-		if(farL > exTop[i].y){
-			farL = exTop[i].y;
-		}
-	}
-	for(int i = 0; i < exBott.size();i++){
-		if(farB < exBott[i].y){
-			farB = exBott[i].y;
-		}
-	}
-	
 	std::vector<cv::Point2f> src;
-	src.push_back(cv::Point2f( (float)(farL),(float)(farT)));
-	src.push_back(cv::Point2f( (float)(farR),(float)(farT)));
-	src.push_back(cv::Point2f( (float)(farL),(float)(farB)));
-	src.push_back(cv::Point2f( (float)(farR),(float)(farB)));
-	
-	
+	src.push_back(B);
+	src.push_back(A);
+	src.push_back(D);
+	src.push_back(C);
+
+	float widthLT = sqrt((src[0].x - src[3].x)*(src[0].x - src[3].x) + (src[0].y - src[3].y)*(src[0].y - src[3].y));
+	float widthBR = sqrt((src[1].x - src[2].x)*(src[1].x - src[2].x) + (src[1].y - src[2].y)*(src[1].y - src[2].y));
+	int maxWidth = widthLT > widthBR ? (int)widthLT : (int)widthBR;
+
+	float heightLB = sqrt((src[0].x - src[1].x)*(src[0].x - src[1].x) + (src[0].y - src[1].y)*(src[0].y - src[1].y));
+	float heightRT = sqrt((src[2].x - src[3].x)*(src[2].x - src[3].x) + (src[2].y - src[3].y)*(src[2].y - src[3].y));
+	int maxHeight = heightLB > heightRT ? (int)heightLB : (int)heightRT;
+
 	std::vector<cv::Point2f> dst;
-	dst.push_back(cv::Point2f( (float)(0),(float)(0)));
-	dst.push_back(cv::Point2f( (float)(farR),(float)(0)));
-	dst.push_back(cv::Point2f( (float)(0),(float)(farB)));
-	dst.push_back(cv::Point2f( (float)(farR),(float)(farB)));
-	
+	dst.push_back(cv::Point2f(0, 0));
+	dst.push_back(cv::Point2f(0, maxHeight - 1));
+	dst.push_back(cv::Point2f(maxWidth - 1, maxHeight - 1));
+	dst.push_back(cv::Point2f(maxWidth - 1, 0));
 
 	cv::Mat M = cv::getPerspectiveTransform(src,dst);
 
-	cv::Size warped_image_size = cv::Size(farR+16,farB+16); // +15 is for padding of the sign
+	cv::Size warped_image_size = cv::Size(maxWidth, maxHeight); // +15 is for padding of the sign
 
 	cv::Mat warpedImg;
 	cv::Mat cropped_pt;
-	cv::warpPerspective(im,warpedImg,M,warped_image_size);
+	cv::warpPerspective(im,warpedImg,M,warped_image_size,cv::INTER_LINEAR);
 
 	cv::cvtColor(warpedImg, m_cropped_pt_im, cv::COLOR_HSV2BGR);
 	cropped_pt = m_cropped_pt_im.clone();
