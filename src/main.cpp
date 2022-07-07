@@ -74,9 +74,9 @@ int main()
 	cv::createTrackbar("V_GREEN LOW","GREEN", &g_v_min, 255, onChangeGreen, (void*)&det);
 #endif
 
-#if DRAW_T_HSVV_B
+#if DRAW_T_HSV_B
 	int b_h_min = 84, b_s_min = 50, b_v_min = 50;
-	int b_h_high = 130, b_s_high = 255, b_v_high = 255;
+	int b_h_high = 130, b_s_high = 184, b_v_high = 255;
 	cv::namedWindow("BLUE",cv::WINDOW_AUTOSIZE);
 	cv::createTrackbar("H_BLUE HIGH","BLUE", &b_h_high, 180, onChangeBlue, (void*)&det);
 	cv::createTrackbar("H_BLUE LOW","BLUE", &b_h_min, 180, onChangeBlue, (void*)&det);
@@ -98,7 +98,23 @@ int main()
 	cv::createTrackbar("V_YELLOW LOW","YELLOW", &y_v_min, 255, onChangeYellow, (void*)&det);
 #endif
 
-	cv::waitKey();
+	cv::waitKey(0);
+	std::string keyboard_input;
+	//TODO trackbars must spawn new thread
+	//do
+	//{
+	//	std::cin >> keyboard_input;
+
+	//	//echo
+	//	std::cout << keyboard_input;
+
+	//	if(keyboard_input == "save")
+	//	{
+	//		//TODO write to file trackbar values 
+	//	}
+
+	//}while(keyboard_input != "quit");
+
 	return 0;
 }
 

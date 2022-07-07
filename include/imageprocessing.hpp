@@ -12,7 +12,7 @@
 #define DISPLAY_MASK_B 0
 #define DISPLAY_MASK_Y 0
 #define DISPLAY_CONTOURS 1
-#define DISPLAY_PT 0
+#define DISPLAY_PT 1
 
 enum shape
 {
@@ -25,8 +25,8 @@ typedef enum
 {
 	RED = 0,
 	GREEN = 1,
-	YELLOW = 2,
-	BLUE = 3
+	BLUE = 2,
+	YELLOW = 3
 }color;
 
 struct color_bound
@@ -54,8 +54,8 @@ private:
 	void mask_im(cv::Mat);
 	void errode_masks();
 	void find_contour_masked(cv::Mat im);
-	void approximate_shape(cv::Mat im, std::vector<std::vector<cv::Point>>);
-	void perspective_transform(cv::Mat, std::vector<cv::Point>, std::string);
+	void approximate_shape(cv::Mat im, std::vector<std::vector<cv::Point>>, int);
+	void perspective_transform(cv::Mat, std::vector<cv::Point>);
 };
 
 #endif

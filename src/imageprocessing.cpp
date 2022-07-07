@@ -12,13 +12,15 @@ void SignDetection::init_params()
 		cv::Scalar(35, 50, 50),
 		cv::Scalar(75, 255, 255)});
 	m_cb.push_back((struct color_bound){
+		BLUE,
+		cv::Scalar(84, 50, 50),
+		//cv::Scalar(130, 255, 255)});
+		//testing
+		cv::Scalar(130, 255, 255)});
+	m_cb.push_back((struct color_bound){
 		YELLOW,
 		cv::Scalar(27, 75, 75),
 		cv::Scalar(33, 50, 50)});
-	m_cb.push_back((struct color_bound){
-		BLUE,
-		cv::Scalar(84, 50, 50),
-		cv::Scalar(130, 255, 255)});
 }
 
 SignDetection::SignDetection()
@@ -34,15 +36,7 @@ SignDetection::SignDetection(cv::Mat im)
 
 void SignDetection::setColorBound(struct color_bound cb)
 {
-	std::vector<struct color_bound>::iterator it;
-	for(it = m_cb.begin(); it != m_cb.end(); ++it)
-	{
-		if(cb.c == (*it).c)
-		{
-			*it = cb;
-			break;
-		}
-	}
+	m_cb[cb.c] = cb;
 }
 
 void SignDetection::parse()
@@ -79,7 +73,6 @@ void SignDetection::parse()
 
 	cv::imshow("contours", m_contours_im);
 
-	//clean up retard!
 	m_masks.clear();
 }
 
@@ -132,41 +125,44 @@ void SignDetection::find_contour_masked(cv::Mat im)
 			//TODO draw contours on one image!
     	    cv::drawContours(contourImage, contours, idx, colors[m_cb[i].c]);
     	}
-		i++;
 
-		approximate_shape(im, contours);
+		approximate_shape(im, contours, i);
+		i++;
 	}
 	m_contours_im = contourImage;
 }
 
 //TODO improve this function for better curve analysis
-void SignDetection::approximate_shape(cv::Mat im, std::vector<std::vector<cv::Point>> contours)
+void SignDetection::approximate_shape(cv::Mat im, std::vector<std::vector<cv::Point>> contours, int c)
 {
 	//approximate shape of contour
+	double area = 0;
 	int order = 0;
 	double arclen = 0;
 	double epsilon = 0;
 	std::vector<std::vector<cv::Point>>::iterator contour;
 	std::vector<cv::Point> approx_curve;
-	int i = 0;
 	for(contour = contours.begin(); contour != contours.end(); ++contour)
 	{ 
 		arclen = cv::arcLength((*contour), true);
 		epsilon = 0.01*arclen;
 		cv::approxPolyDP(*contour, approx_curve, epsilon, true);
 		order = approx_curve.size();
+		area = cv::contourArea(approx_curve);
 
 		//TODO better polynome order test!
-		if(order > 12 && order < 17)
+		if(order > 12 && order < 17 && c == RED && area > 1000)
 		{
 			std::cout << "Red circle!\n";
 			//TODO too many curves to try and warp
-			//perspective_transform(im, *contour, std::to_string(i++));	
+#if DISPLAY_PT
+			perspective_transform(im, *contour);	
+#endif
 		}
 	}
 }
 
-void SignDetection::perspective_transform(cv::Mat im, std::vector<cv::Point> approx_curve, std::string tag)
+void SignDetection::perspective_transform(cv::Mat im, std::vector<cv::Point> approx_curve)
 {
 	//get corners of contours and perform perspective transformation
 	std::vector<cv::Point> exLeft;
@@ -253,7 +249,9 @@ void SignDetection::perspective_transform(cv::Mat im, std::vector<cv::Point> app
 	cv::Mat warpedImg;
 	cv::warpPerspective(im,warpedImg,M,warped_image_size);
 
-	//cv::imshow("Warped" + tag, warpedImg);
+	cv::Mat rgb_im;
+	cv::cvtColor(warpedImg, rgb_im, cv::COLOR_HSV2BGR);
+	cv::imshow("Warped", rgb_im);
 }
 
 
