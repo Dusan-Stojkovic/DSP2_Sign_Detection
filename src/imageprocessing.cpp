@@ -1,5 +1,7 @@
 #include "imageprocessing.hpp"
 
+int flag = 0;
+
 void SignDetection::init_params()
 {
 	//define default color bounds
@@ -104,7 +106,7 @@ void SignDetection::mask_im(cv::Mat im)
 void SignDetection::errode_masks()
 {
 	//apply errosion
-	int n = 5;
+	int n = 3;
 	cv::Mat kernel(n, n, CV_8UC1, 1);
 	std::vector<cv::Mat1b>::iterator mask_it;
 	for(mask_it = m_masks.begin(); mask_it != m_masks.end(); ++mask_it)
@@ -117,7 +119,7 @@ void SignDetection::errode_masks()
 void SignDetection::dilate_masks()
 {
 	//apply dilation
-	int n = 3;
+	int n = 2;
 	cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3,3));
 	std::vector<cv::Mat1b>::iterator mask_it;
 	for(mask_it = m_masks.begin(); mask_it != m_masks.end(); ++mask_it)
@@ -133,8 +135,9 @@ void SignDetection::find_contour_masked(cv::Mat im)
   	cv::Scalar colors[4];
   	colors[0] = cv::Scalar(0, 0, 255);
   	colors[1] = cv::Scalar(0, 255, 0);
-	colors[2] = cv::Scalar(255, 255, 0);
-  	colors[3] = cv::Scalar(255, 0, 0);
+  	colors[2] = cv::Scalar(255, 0, 0);
+	colors[3] = cv::Scalar(255, 255, 0);
+	
 	std::vector<cv::Mat1b>::iterator mask_it;
     cv::Mat contourImage(im.size(), CV_8UC3, cv::Scalar(0,0,0));
 	int i = 0;
@@ -145,7 +148,7 @@ void SignDetection::find_contour_masked(cv::Mat im)
 		cv::threshold(threshold, threshold, 128, 255, cv::THRESH_BINARY);
 		cv::Mat contourOutput = threshold.clone();
 		cv::bitwise_and(im, im, threshold);  // Update foreground with bitwise_and to extract real foreground
-		cv::findContours(contourOutput, contours, cv::RETR_LIST, cv::CHAIN_APPROX_NONE);
+		cv::findContours(contourOutput, contours, cv::RETR_LIST, cv::CHAIN_APPROX_SIMPLE);
 
 		//Draw the contours
     	for (size_t idx = 0; idx < contours.size(); idx++) {
@@ -177,13 +180,21 @@ void SignDetection::approximate_shape(cv::Mat im, std::vector<std::vector<cv::Po
 		area = cv::contourArea(approx_curve);
 
 		//TODO better polynome order test!
-		if(order > 12 && order < 17 && c == RED && area > 1000)
+		if(order > 14 && order < 17 && c == RED && area > 1000 && flag == 0)
 		{
 			std::cout << "Red circle!\n";
+			flag = 1;
+
+		}
+		else if(order == 7 && c == BLUE && area > 1000 && flag == 1){
 			//TODO too many curves to try and warp
-#if DISPLAY_PT
-			perspective_transform(im, *contour);	
-#endif
+			std::cout << "Forbidden parking!\n";
+
+		}
+		else if(order == 3 && c == BLUE && area > 1000)
+		{
+			std::cout << "Parking!\n";
+			//TODO too many curves to try and warp
 		}
 		
 	}

@@ -9,9 +9,9 @@
 
 #define DISPLAY_ERROSION 0
 #define DISPLAY_MASK_R 1
-#define DISPLAY_MASK_G 0
-#define DISPLAY_MASK_B 0
-#define DISPLAY_MASK_Y 0
+#define DISPLAY_MASK_G 1
+#define DISPLAY_MASK_B 1
+#define DISPLAY_MASK_Y 1
 #define DISPLAY_CONTOURS 1
 #define DISPLAY_PT 1
 

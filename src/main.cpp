@@ -8,9 +8,9 @@
 
 //to draw trackbar set to 1
 #define DRAW_T_HSV_R 1
-#define DRAW_T_HSV_G 0
-#define DRAW_T_HSV_B 0
-#define DRAW_T_HSV_Y 0
+#define DRAW_T_HSV_G 1
+#define DRAW_T_HSV_B 1
+#define DRAW_T_HSV_Y 1
 
 #if DRAW_T_HSV_R
 static void onChangeRed(int i,void* sd);
@@ -39,7 +39,7 @@ int main()
 	cv::Mat image, resized_image;
 
 	//Load image
-	std::string loaded_im = "data/jednosmerna.png";
+	std::string loaded_im = "data/zabranjen_parking.png";
 	image = cv::imread(loaded_im);
 	long size;
 
@@ -173,11 +173,13 @@ void imageProcessingThread(SignDetection& det)
 	det.parse();
 
 #if DRAW_T_HSV_R 
-	int r_h_min = 165, r_s_min = 50, r_v_min = 129;
-	int r_h_high = 180, r_s_high = 255, r_v_high = 255;
+	int r_h_min = 0, r_s_min = 50, r_v_min = 129;
+	int r_h_high = 165, r_s_high = 255, r_v_high = 255;
 	cv::namedWindow("RED",cv::WINDOW_AUTOSIZE);
 	cv::createTrackbar("H_RED HIGH","RED", &r_h_high, 180, onChangeRed, (void*)&det);
+	cv::setTrackbarMin("H_RED HIGH","RED",r_h_high);
 	cv::createTrackbar("H_RED LOW","RED", &r_h_min, 180, onChangeRed, (void*)&det);
+	cv::setTrackbarMin("H_RED LOW","RED",r_h_min);
 	cv::createTrackbar("S_RED HIGH","RED", &r_s_high, 255, onChangeRed, (void*)&det);
 	cv::createTrackbar("S_RED LOW","RED", &r_s_min, 180, onChangeRed, (void*)&det);
 	cv::createTrackbar("V_RED HIGH","RED", &r_v_high, 255, onChangeRed, (void*)&det);
@@ -246,15 +248,15 @@ static void onChangeGreen(int i,void* sd){
 	hue_h = cv::getTrackbarPos("H_GREEN HIGH","GREEN");
 	value_h = cv::getTrackbarPos("V_GREEN HIGH","GREEN");
 	saturation_h = cv::getTrackbarPos("S_GREEN HIGH","GREEN");
-	hue_h = cv::getTrackbarPos("H_GREEN LOW","GREEN");
-	value_h = cv::getTrackbarPos("V_GREEN LOW","GREEN");
-	saturation_h = cv::getTrackbarPos("S_GREEN LOW","GREEN");
+	hue_l = cv::getTrackbarPos("H_GREEN LOW","GREEN");
+	value_l = cv::getTrackbarPos("V_GREEN LOW","GREEN");
+	saturation_l = cv::getTrackbarPos("S_GREEN LOW","GREEN");
 	
 	SignDetection* det = (SignDetection*)sd;
 	cv::Scalar s_lower(hue_l, value_l, saturation_l);
 	cv::Scalar s_higher(hue_h, value_h, saturation_h);
-	(*det).setColorBound((struct color_bound){GREEN, s_lower, s_higher});
-	(*det).parse();
+	det->setColorBound((struct color_bound){GREEN, s_lower, s_higher});
+	det->parse();
 }
 
 static void onChangeBlue(int i, void* sd){
@@ -263,15 +265,15 @@ static void onChangeBlue(int i, void* sd){
 	hue_h = cv::getTrackbarPos("H_BLUE HIGH","BLUE");
 	value_h = cv::getTrackbarPos("V_BLUE HIGH","BLUE");
 	saturation_h = cv::getTrackbarPos("S_BLUE HIGH","BLUE");
-	hue_h = cv::getTrackbarPos("H_BLUE LOW","BLUE");
-	value_h = cv::getTrackbarPos("V_BLUE LOW","BLUE");
-	saturation_h = cv::getTrackbarPos("S_BLUE LOW","BLUE");
+	hue_l = cv::getTrackbarPos("H_BLUE LOW","BLUE");
+	value_l = cv::getTrackbarPos("V_BLUE LOW","BLUE");
+	saturation_l = cv::getTrackbarPos("S_BLUE LOW","BLUE");
 	
 	SignDetection* det = (SignDetection*)sd;
 	cv::Scalar s_lower(hue_l, value_l, saturation_l);
 	cv::Scalar s_higher(hue_h, value_h, saturation_h);
-	(*det).setColorBound((struct color_bound){BLUE, s_lower, s_higher});
-	(*det).parse();
+	det->setColorBound((struct color_bound){BLUE, s_lower, s_higher});
+	det->parse();
 }
 
 static void onChangeYellow(int i, void* sd){
@@ -287,7 +289,7 @@ static void onChangeYellow(int i, void* sd){
 	SignDetection* det = (SignDetection*)sd;
 	cv::Scalar s_lower(hue_l, value_l, saturation_l);
 	cv::Scalar s_higher(hue_h, value_h, saturation_h);
-	(*det).setColorBound((struct color_bound){YELLOW, s_lower, s_higher});
-	(*det).parse();
+	det->setColorBound((struct color_bound){YELLOW, s_lower, s_higher});
+	det->parse();
 }
 
