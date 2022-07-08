@@ -8,9 +8,9 @@
 
 //to draw trackbar set to 1
 #define DRAW_T_HSV_R 1
-#define DRAW_T_HSV_G 1
-#define DRAW_T_HSV_B 1
-#define DRAW_T_HSV_Y 1
+#define DRAW_T_HSV_G 0
+#define DRAW_T_HSV_B 0
+#define DRAW_T_HSV_Y 0
 
 #if DRAW_T_HSV_R
 static void onChangeRed(int i,void* sd);

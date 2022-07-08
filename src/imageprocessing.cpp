@@ -168,6 +168,7 @@ void SignDetection::approximate_shape(cv::Mat im, std::vector<std::vector<cv::Po
 	double epsilon = 0;
 	std::vector<std::vector<cv::Point>>::iterator contour;
 
+	int i = 0;
 	std::vector<cv::Point> approx_curve;
 	for(contour = contours.begin(); contour != contours.end(); ++contour)
 	{ 
@@ -183,19 +184,14 @@ void SignDetection::approximate_shape(cv::Mat im, std::vector<std::vector<cv::Po
 			std::cout << "Red circle!\n"<<std::endl;
 			//TODO too many curves to try and warp
 #if DISPLAY_PT
-			perspective_transform(im, *contour, c);	
-#endif
-			std::cout << "Red circle!\n";
-#if DISPLAY_PT
-			perspective_transform(im, *contour, c);
+			perspective_transform(im, *contour, c, i++);
 #endif
 
 		}
 		else if(order == 7 && c == BLUE && area > 1000){
-			//TODO too many curves to try and warp
 			std::cout << "Forbidden parking!\n";
 #if DISPLAY_PT
-			perspective_transform(im, *contour, c);
+			perspective_transform(im, *contour, c, i++);
 #endif
 
 		}
@@ -203,38 +199,38 @@ void SignDetection::approximate_shape(cv::Mat im, std::vector<std::vector<cv::Po
 		{
 			std::cout<<"Red octagon\n"<<std::endl;
 #if DISPLAY_PT
-			perspective_transform(im, *contour, c);	
+			perspective_transform(im, *contour, c, i++);	
 #endif
 		}
 		else if (order == 3 && area > 1000 && c==RED)
 		{
 			std::cout<<"Red triangle\n"<<std::endl;
 #if DISPLAY_PT
-			perspective_transform(im, *contour, c);	
+			perspective_transform(im, *contour, c, i++);	
 #endif
 		}
 		else if (order == 4 && area > 1000 && c==YELLOW){
 			std::cout<<"Yellow rectangle\n"<<std::endl;
 #if DISPLAY_PT
-			perspective_transform(im, *contour, c);	
+			perspective_transform(im, *contour, c, i++);	
 #endif
 		}
 		else if(order == 4 && area >1000 && c == BLUE){
 			std::cout<<"Blue rectangle\n"<<std::endl;
 #if DISPLAY_PT
-			perspective_transform(im, *contour, c);	
+			perspective_transform(im, *contour, c, i++);	
 #endif
 		}
 		else if(order > 12 && order <15 && area >1000 && c == BLUE){
 			std::cout<<"Blue Circle\n"<<std::endl;
 #if DISPLAY_PT
-			perspective_transform(im, *contour, c);	
+			perspective_transform(im, *contour, c, i++);	
 #endif
 		}
 		else if(order == 4 && area >1000 && c == GREEN){
 			std::cout<<"Green rectangle\n"<<std::endl;
 #if DISPLAY_PT
-			perspective_transform(im, *contour, c);	
+			perspective_transform(im, *contour, c, i++);	
 #endif
 		}
 		
@@ -242,11 +238,11 @@ void SignDetection::approximate_shape(cv::Mat im, std::vector<std::vector<cv::Po
 	}
 }
 
-void SignDetection::perspective_transform(cv::Mat im, std::vector<cv::Point> approx_curve, int c)
+void SignDetection::perspective_transform(cv::Mat im, std::vector<cv::Point> approx_curve, int c, int tag)
 {
 	//get corners of contours and perform perspective transformation
 	//TODO crop Rect box to save img
-	
+	std::string stamp = std::to_string(c) + std::to_string(tag);
 	cv::Mat boxed_im = im.clone();
 
 	cv::Rect crop_box = cv::boundingRect(approx_curve);
@@ -263,14 +259,17 @@ void SignDetection::perspective_transform(cv::Mat im, std::vector<cv::Point> app
 	line(boxed_im, cv::Point(crop_box.x + crop_box.width, crop_box.y + crop_box.height), cv::Point(crop_box.x, crop_box.y + crop_box.height), cv::Scalar(0,255,255), 2);
 	line(boxed_im, cv::Point(crop_box.x, crop_box.y + crop_box.height), cv::Point(crop_box.x, crop_box.y), cv::Scalar(0,255,255), 2);
 
-	cv::Mat cropped_im = im(crop_box).clone();
-	cv::Mat gray = m_masks[c](crop_box).clone();;
-	//cv::imshow("test", gray);
-	cv::cvtColor(gray, gray, cv::COLOR_GRAY2BGR);
-	cv::bitwise_and(cropped_im, gray, cropped_im);  // Update foreground with bitwise_and to extract real foreground
+	cv::Mat filled_contour = cv::Mat::zeros(im.size(), CV_8UC1);
+	cv::fillPoly(filled_contour, approx_curve, cv::Scalar(255));
 
-	cv::imshow("boxed", boxed_im);
-	cv::imshow("cropped", cropped_im);
+	cv::Mat cropped_im = im.clone(); 
+	cv::cvtColor(filled_contour, filled_contour, cv::COLOR_GRAY2BGR);
+	cv::bitwise_and(im, filled_contour, cropped_im);  // Update foreground with bitwise_and to extract real foreground
+	
+	cropped_im = cropped_im(crop_box);
+
+	cv::imshow("boxed" + stamp, boxed_im);
+	cv::imshow("cropped" + stamp, cropped_im);
 
 	std::vector<cv::Point2f> src;
 	src.push_back(vertices[0]);
@@ -299,15 +298,9 @@ void SignDetection::perspective_transform(cv::Mat im, std::vector<cv::Point> app
 	cv::Mat warpedImg;
 	cv::Mat cropped_pt;
 	cv::warpPerspective(im,warpedImg,M,warped_image_size,cv::INTER_LINEAR);
-	//cv::Point2f pt(warpedImg.rows/2, warpedImg.cols/2);          //point from where to rotate    
-	//cv::Mat r = cv::getRotationMatrix2D(pt, -box.angle/4, 1.0);      //Mat object for storing after rotation
-	//cv::Mat rotated;
-	//cv::warpAffine(warpedImg, rotated, r, cv::Size(warpedImg.rows, warpedImg.cols));  ///applie an affine transforation to image.
-	//cv::imshow("Rotated", rotated);
 
-	//cv::cvtColor(warpedImg, m_cropped_pt_im, cv::COLOR_HSV2BGR);
 	m_cropped_pt_im = cropped_im;
-	cv::imshow("Warped", warpedImg);
+	cv::imshow("Warped" + stamp, warpedImg);
 }
 
 
