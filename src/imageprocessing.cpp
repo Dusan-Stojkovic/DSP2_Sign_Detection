@@ -145,7 +145,6 @@ void SignDetection::find_contour_masked(cv::Mat im)
 		cv::Mat threshold = (*mask_it).clone();
 		cv::threshold(threshold, threshold, 128, 255, cv::THRESH_BINARY);
 		cv::Mat contourOutput = threshold.clone();
-		cv::bitwise_and(im, im, threshold);  // Update foreground with bitwise_and to extract real foreground
 		cv::findContours(contourOutput, contours, cv::RETR_LIST, cv::CHAIN_APPROX_SIMPLE);
 
 		//Draw the contours
@@ -184,45 +183,58 @@ void SignDetection::approximate_shape(cv::Mat im, std::vector<std::vector<cv::Po
 			std::cout << "Red circle!\n"<<std::endl;
 			//TODO too many curves to try and warp
 #if DISPLAY_PT
-			perspective_transform(im, *contour);	
+			perspective_transform(im, *contour, c);	
 #endif
+			std::cout << "Red circle!\n";
+#if DISPLAY_PT
+			perspective_transform(im, *contour, c);
+#endif
+
+		}
+		else if(order == 7 && c == BLUE && area > 1000){
+			//TODO too many curves to try and warp
+			std::cout << "Forbidden parking!\n";
+#if DISPLAY_PT
+			perspective_transform(im, *contour, c);
+#endif
+
 		}
 		else if (order == 8 && area > 1000 && c==RED)
 		{
 			std::cout<<"Red octagon\n"<<std::endl;
 #if DISPLAY_PT
-			perspective_transform(im, *contour);	
+			perspective_transform(im, *contour, c);	
 #endif
 		}
 		else if (order == 3 && area > 1000 && c==RED)
 		{
 			std::cout<<"Red triangle\n"<<std::endl;
 #if DISPLAY_PT
-			perspective_transform(im, *contour);	
+			perspective_transform(im, *contour, c);	
 #endif
 		}
 		else if (order == 4 && area > 1000 && c==YELLOW){
 			std::cout<<"Yellow rectangle\n"<<std::endl;
 #if DISPLAY_PT
-			perspective_transform(im, *contour);	
+			perspective_transform(im, *contour, c);	
 #endif
 		}
 		else if(order == 4 && area >1000 && c == BLUE){
 			std::cout<<"Blue rectangle\n"<<std::endl;
 #if DISPLAY_PT
-			perspective_transform(im, *contour);	
+			perspective_transform(im, *contour, c);	
 #endif
 		}
 		else if(order > 12 && order <15 && area >1000 && c == BLUE){
 			std::cout<<"Blue Circle\n"<<std::endl;
 #if DISPLAY_PT
-			perspective_transform(im, *contour);	
+			perspective_transform(im, *contour, c);	
 #endif
 		}
 		else if(order == 4 && area >1000 && c == GREEN){
 			std::cout<<"Green rectangle\n"<<std::endl;
 #if DISPLAY_PT
-			perspective_transform(im, *contour);	
+			perspective_transform(im, *contour, c);	
 #endif
 		}
 		
@@ -230,7 +242,7 @@ void SignDetection::approximate_shape(cv::Mat im, std::vector<std::vector<cv::Po
 	}
 }
 
-void SignDetection::perspective_transform(cv::Mat im, std::vector<cv::Point> approx_curve)
+void SignDetection::perspective_transform(cv::Mat im, std::vector<cv::Point> approx_curve, int c)
 {
 	//get corners of contours and perform perspective transformation
 	//TODO crop Rect box to save img
@@ -251,7 +263,14 @@ void SignDetection::perspective_transform(cv::Mat im, std::vector<cv::Point> app
 	line(boxed_im, cv::Point(crop_box.x + crop_box.width, crop_box.y + crop_box.height), cv::Point(crop_box.x, crop_box.y + crop_box.height), cv::Scalar(0,255,255), 2);
 	line(boxed_im, cv::Point(crop_box.x, crop_box.y + crop_box.height), cv::Point(crop_box.x, crop_box.y), cv::Scalar(0,255,255), 2);
 
+	cv::Mat cropped_im = im(crop_box).clone();
+	cv::Mat gray = m_masks[c](crop_box).clone();;
+	//cv::imshow("test", gray);
+	cv::cvtColor(gray, gray, cv::COLOR_GRAY2BGR);
+	cv::bitwise_and(cropped_im, gray, cropped_im);  // Update foreground with bitwise_and to extract real foreground
+
 	cv::imshow("boxed", boxed_im);
+	cv::imshow("cropped", cropped_im);
 
 	std::vector<cv::Point2f> src;
 	src.push_back(vertices[0]);
@@ -280,17 +299,15 @@ void SignDetection::perspective_transform(cv::Mat im, std::vector<cv::Point> app
 	cv::Mat warpedImg;
 	cv::Mat cropped_pt;
 	cv::warpPerspective(im,warpedImg,M,warped_image_size,cv::INTER_LINEAR);
-
-	//TODO put these together
-	//cv::Mat threshold = (*mask_it).clone();
-	//cv::threshold(threshold, threshold, 128, 255, cv::THRESH_BINARY);
-	//cv::Mat contourOutput = threshold.clone();
-	//cv::bitwise_and(im, im, threshold);  // Update foreground with bitwise_and to extract real foreground
+	//cv::Point2f pt(warpedImg.rows/2, warpedImg.cols/2);          //point from where to rotate    
+	//cv::Mat r = cv::getRotationMatrix2D(pt, -box.angle/4, 1.0);      //Mat object for storing after rotation
+	//cv::Mat rotated;
+	//cv::warpAffine(warpedImg, rotated, r, cv::Size(warpedImg.rows, warpedImg.cols));  ///applie an affine transforation to image.
+	//cv::imshow("Rotated", rotated);
 
 	//cv::cvtColor(warpedImg, m_cropped_pt_im, cv::COLOR_HSV2BGR);
-	m_cropped_pt_im = warpedImg;
-	cropped_pt = m_cropped_pt_im.clone();
-	cv::imshow("Warped", cropped_pt);
+	m_cropped_pt_im = cropped_im;
+	cv::imshow("Warped", warpedImg);
 }
 
 

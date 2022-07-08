@@ -6,6 +6,7 @@
 #include "opencv2/core/core.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
+#include <opencv2/video/background_segm.hpp>
 
 #define DISPLAY_ERROSION 0
 #define DISPLAY_MASK_R 1
@@ -60,7 +61,7 @@ private:
 	void dilate_masks();
 	void find_contour_masked(cv::Mat im);
 	void approximate_shape(cv::Mat im, std::vector<std::vector<cv::Point>>, int);
-	void perspective_transform(cv::Mat, std::vector<cv::Point>);
+	void perspective_transform(cv::Mat, std::vector<cv::Point>, int);
 };
 
 #endif
