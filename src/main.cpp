@@ -39,7 +39,7 @@ int main()
 	cv::Mat image, resized_image;
 
 	//Load image
-	std::string loaded_im = "data/zabranjen_parking.png";
+	std::string loaded_im = "data/jednosmerna.png";
 	image = cv::imread(loaded_im);
 	long size;
 
@@ -173,13 +173,12 @@ void imageProcessingThread(SignDetection& det)
 	det.parse();
 
 #if DRAW_T_HSV_R 
-	int r_h_min = 0, r_s_min = 50, r_v_min = 129;
-	int r_h_high = 165, r_s_high = 255, r_v_high = 255;
+	int r_h_min = 165, r_s_min = 50, r_v_min = 129;
+	int r_h_high = 180, r_s_high = 255, r_v_high = 255;
 	cv::namedWindow("RED",cv::WINDOW_AUTOSIZE);
 	cv::createTrackbar("H_RED HIGH","RED", &r_h_high, 180, onChangeRed, (void*)&det);
-	cv::setTrackbarMin("H_RED HIGH","RED",r_h_high);
+	cv::setTrackbarMin("H_RED HIGH","RED",r_h_min);
 	cv::createTrackbar("H_RED LOW","RED", &r_h_min, 180, onChangeRed, (void*)&det);
-	cv::setTrackbarMin("H_RED LOW","RED",r_h_min);
 	cv::createTrackbar("S_RED HIGH","RED", &r_s_high, 255, onChangeRed, (void*)&det);
 	cv::createTrackbar("S_RED LOW","RED", &r_s_min, 180, onChangeRed, (void*)&det);
 	cv::createTrackbar("V_RED HIGH","RED", &r_v_high, 255, onChangeRed, (void*)&det);
@@ -187,8 +186,8 @@ void imageProcessingThread(SignDetection& det)
 #endif
 
 #if DRAW_T_HSV_G
-	int g_h_min = 35, g_s_min = 50, g_v_min = 50;
-	int g_h_high = 75, g_s_high = 255, g_v_high = 255;
+	int g_h_min = 73, g_s_min = 75, g_v_min = 165;
+	int g_h_high = 88, g_s_high = 255, g_v_high = 255;
 	cv::namedWindow("GREEN",cv::WINDOW_AUTOSIZE);
 	cv::createTrackbar("H_GREEN HIGH","GREEN", &g_h_high, 180, onChangeGreen, (void*)&det);
 	cv::createTrackbar("H_GREEN LOW","GREEN", &g_h_min, 180, onChangeGreen, (void*)&det);
@@ -199,8 +198,8 @@ void imageProcessingThread(SignDetection& det)
 #endif
 
 #if DRAW_T_HSV_B
-	int b_h_min = 84, b_s_min = 50, b_v_min = 50;
-	int b_h_high = 130, b_s_high = 184, b_v_high = 255;
+	int b_h_min = 91, b_s_min = 100, b_v_min = 100;
+	int b_h_high = 130, b_s_high = 255, b_v_high = 255;
 	cv::namedWindow("BLUE",cv::WINDOW_AUTOSIZE);
 	cv::createTrackbar("H_BLUE HIGH","BLUE", &b_h_high, 180, onChangeBlue, (void*)&det);
 	cv::createTrackbar("H_BLUE LOW","BLUE", &b_h_min, 180, onChangeBlue, (void*)&det);
@@ -211,8 +210,8 @@ void imageProcessingThread(SignDetection& det)
 #endif
 
 #if DRAW_T_HSV_Y
-	int y_h_min = 27, y_s_min = 75, y_v_min = 75;
-	int y_h_high = 33, y_s_high = 50, y_v_high = 50;
+	int y_h_min = 16, y_s_min = 170, y_v_min = 220;
+	int y_h_high = 33, y_s_high = 255, y_v_high = 255;
 	cv::namedWindow("YELLOW",cv::WINDOW_AUTOSIZE);
 	cv::createTrackbar("H_YELLOW HIGH","YELLOW", &y_h_high, 180, onChangeYellow, (void*)&det);
 	cv::createTrackbar("H_YELLOW LOW","YELLOW", &y_h_min, 180, onChangeYellow, (void*)&det);

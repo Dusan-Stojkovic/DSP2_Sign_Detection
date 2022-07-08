@@ -1,7 +1,5 @@
 #include "imageprocessing.hpp"
 
-int flag = 0;
-
 void SignDetection::init_params()
 {
 	//define default color bounds
@@ -11,18 +9,18 @@ void SignDetection::init_params()
 		cv::Scalar(180, 255, 255)});
 	m_cb.push_back((struct color_bound){
 		GREEN,
-		cv::Scalar(35, 50, 50),
-		cv::Scalar(75, 255, 255)});
+		cv::Scalar(73, 75, 165),
+		cv::Scalar(88, 255, 255)});
 	m_cb.push_back((struct color_bound){
 		BLUE,
-		cv::Scalar(84, 50, 50),
+		cv::Scalar(84, 100, 100),
 		//cv::Scalar(130, 255, 255)});
 		//testing
 		cv::Scalar(130, 255, 255)});
 	m_cb.push_back((struct color_bound){
 		YELLOW,
-		cv::Scalar(27, 75, 75),
-		cv::Scalar(33, 50, 50)});
+		cv::Scalar(16, 170, 220),
+		cv::Scalar(33, 255, 255)});
 }
 
 SignDetection::SignDetection()
@@ -136,7 +134,7 @@ void SignDetection::find_contour_masked(cv::Mat im)
   	colors[0] = cv::Scalar(0, 0, 255);
   	colors[1] = cv::Scalar(0, 255, 0);
   	colors[2] = cv::Scalar(255, 0, 0);
-	colors[3] = cv::Scalar(255, 255, 0);
+	colors[3] = cv::Scalar(120, 120, 0);
 	
 	std::vector<cv::Mat1b>::iterator mask_it;
     cv::Mat contourImage(im.size(), CV_8UC3, cv::Scalar(0,0,0));
@@ -170,6 +168,7 @@ void SignDetection::approximate_shape(cv::Mat im, std::vector<std::vector<cv::Po
 	double arclen = 0;
 	double epsilon = 0;
 	std::vector<std::vector<cv::Point>>::iterator contour;
+
 	std::vector<cv::Point> approx_curve;
 	for(contour = contours.begin(); contour != contours.end(); ++contour)
 	{ 
@@ -180,22 +179,53 @@ void SignDetection::approximate_shape(cv::Mat im, std::vector<std::vector<cv::Po
 		area = cv::contourArea(approx_curve);
 
 		//TODO better polynome order test!
-		if(order > 14 && order < 17 && c == RED && area > 1000 && flag == 0)
+		if(order > 12 && order < 17 && c == RED && area > 1000 )
 		{
-			std::cout << "Red circle!\n";
-			flag = 1;
-
-		}
-		else if(order == 7 && c == BLUE && area > 1000 && flag == 1){
+			std::cout << "Red circle!\n"<<std::endl;
 			//TODO too many curves to try and warp
-			std::cout << "Forbidden parking!\n";
-
+#if DISPLAY_PT
+			perspective_transform(im, *contour);	
+#endif
 		}
-		else if(order == 3 && c == BLUE && area > 1000)
+		else if (order == 8 && area > 1000 && c==RED)
 		{
-			std::cout << "Parking!\n";
-			//TODO too many curves to try and warp
+			std::cout<<"Red octagon\n"<<std::endl;
+#if DISPLAY_PT
+			perspective_transform(im, *contour);	
+#endif
 		}
+		else if (order == 3 && area > 1000 && c==RED)
+		{
+			std::cout<<"Red triangle\n"<<std::endl;
+#if DISPLAY_PT
+			perspective_transform(im, *contour);	
+#endif
+		}
+		else if (order == 4 && area > 1000 && c==YELLOW){
+			std::cout<<"Yellow rectangle\n"<<std::endl;
+#if DISPLAY_PT
+			perspective_transform(im, *contour);	
+#endif
+		}
+		else if(order == 4 && area >1000 && c == BLUE){
+			std::cout<<"Blue rectangle\n"<<std::endl;
+#if DISPLAY_PT
+			perspective_transform(im, *contour);	
+#endif
+		}
+		else if(order > 12 && order <15 && area >1000 && c == BLUE){
+			std::cout<<"Blue Circle\n"<<std::endl;
+#if DISPLAY_PT
+			perspective_transform(im, *contour);	
+#endif
+		}
+		else if(order == 4 && area >1000 && c == GREEN){
+			std::cout<<"Green rectangle\n"<<std::endl;
+#if DISPLAY_PT
+			perspective_transform(im, *contour);	
+#endif
+		}
+		
 		
 	}
 }
