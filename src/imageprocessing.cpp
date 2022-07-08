@@ -259,8 +259,10 @@ void SignDetection::perspective_transform(cv::Mat im, std::vector<cv::Point> app
 	line(boxed_im, cv::Point(crop_box.x + crop_box.width, crop_box.y + crop_box.height), cv::Point(crop_box.x, crop_box.y + crop_box.height), cv::Scalar(0,255,255), 2);
 	line(boxed_im, cv::Point(crop_box.x, crop_box.y + crop_box.height), cv::Point(crop_box.x, crop_box.y), cv::Scalar(0,255,255), 2);
 
+	std::vector<std::vector<cv::Point>> curves;
+	curves.push_back(approx_curve);
 	cv::Mat filled_contour = cv::Mat::zeros(im.size(), CV_8UC1);
-	cv::fillPoly(filled_contour, approx_curve, cv::Scalar(255));
+	cv::fillPoly(filled_contour, curves, cv::Scalar(255));
 
 	cv::Mat cropped_im = im.clone(); 
 	cv::cvtColor(filled_contour, filled_contour, cv::COLOR_GRAY2BGR);
