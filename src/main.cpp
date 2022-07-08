@@ -9,7 +9,7 @@
 //to draw trackbar set to 1
 #define DRAW_T_HSV_R 1
 #define DRAW_T_HSV_G 0
-#define DRAW_T_HSV_B 0
+#define DRAW_T_HSV_B 1
 #define DRAW_T_HSV_Y 0
 
 #if DRAW_T_HSV_R
@@ -39,7 +39,7 @@ int main()
 	cv::Mat image, resized_image;
 
 	//Load image
-	std::string loaded_im = "data/jednosmerna.png";
+	std::string loaded_im = "data/multiple_signs.png";
 	image = cv::imread(loaded_im);
 	long size;
 
@@ -177,10 +177,9 @@ void imageProcessingThread(SignDetection& det)
 	int r_h_high = 180, r_s_high = 255, r_v_high = 255;
 	cv::namedWindow("RED",cv::WINDOW_AUTOSIZE);
 	cv::createTrackbar("H_RED HIGH","RED", &r_h_high, 180, onChangeRed, (void*)&det);
-	cv::setTrackbarMin("H_RED HIGH","RED",r_h_min);
 	cv::createTrackbar("H_RED LOW","RED", &r_h_min, 180, onChangeRed, (void*)&det);
 	cv::createTrackbar("S_RED HIGH","RED", &r_s_high, 255, onChangeRed, (void*)&det);
-	cv::createTrackbar("S_RED LOW","RED", &r_s_min, 180, onChangeRed, (void*)&det);
+	cv::createTrackbar("S_RED LOW","RED", &r_s_min, 255, onChangeRed, (void*)&det);
 	cv::createTrackbar("V_RED HIGH","RED", &r_v_high, 255, onChangeRed, (void*)&det);
 	cv::createTrackbar("V_RED LOW","RED", &r_v_min, 255, onChangeRed, (void*)&det);
 #endif

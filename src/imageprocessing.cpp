@@ -5,7 +5,7 @@ void SignDetection::init_params()
 	//define default color bounds
 	m_cb.push_back((struct color_bound){
 		RED,
-		cv::Scalar(165, 50, 129),
+		cv::Scalar(0, 110, 120),
 		cv::Scalar(180, 255, 255)});
 	m_cb.push_back((struct color_bound){
 		GREEN,
