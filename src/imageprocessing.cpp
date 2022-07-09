@@ -45,14 +45,30 @@ void SignDetection::setColorBound(struct color_bound cb)
 	m_cb[cb.c] = cb;
 }
 
-cv::Mat SignDetection::getCroppedPT()
+std::vector<cv::Mat> SignDetection::getCroppedPT()
 {
-	std::cout << m_cropped_pt_im.size() <<std::endl;
 	return m_cropped_pt_im;
 }
 
 void SignDetection::parse()
 {
+	//destroy windows
+	for(int i = 0; i < 4; i++)
+	{
+		for(int j = 0; j < m_cropped_pt_im.size(); j++)
+		{
+			std::string tag1 = std::to_string(i) + std::to_string(j);
+			std::string tag2 = std::to_string(i);
+			cv::destroyWindow("Warped" + tag1);
+			cv::destroyWindow("cropped" + tag2);
+		}
+	}
+	cv::destroyWindow("boxed");
+
+	//prepare to process
+	m_masks.clear();
+	m_cropped_pt_im.clear();
+
 	//hsv transform
 	cv::Mat hsv_im;
 	cv::cvtColor(m_im, hsv_im, cv::COLOR_BGR2HSV);
@@ -87,8 +103,8 @@ void SignDetection::parse()
 
 	cv::imshow("contours", m_contours_im);
 	cv::imshow("boxed", m_boxed_im);
-
-	m_masks.clear();
+	for(int i = 0; i < m_cropped_pt_im.size(); i++)
+		cv::imshow("cropped" + std::to_string(i), m_cropped_pt_im[i]);
 }
 
 void SignDetection::mask_im(cv::Mat im)
@@ -271,8 +287,7 @@ void SignDetection::perspective_transform(cv::Mat im, std::vector<cv::Point> app
 	cv::bitwise_and(im, filled_contour, cropped_im);  // Update foreground with bitwise_and to extract real foreground
 	
 	cropped_im = cropped_im(crop_box);
-
-	cv::imshow("cropped" + stamp, cropped_im);
+	m_cropped_pt_im.push_back(cropped_im);
 
 	std::vector<cv::Point2f> src;
 	src.push_back(vertices[0]);
@@ -302,7 +317,6 @@ void SignDetection::perspective_transform(cv::Mat im, std::vector<cv::Point> app
 	cv::Mat cropped_pt;
 	cv::warpPerspective(im,warpedImg,M,warped_image_size,cv::INTER_LINEAR);
 
-	m_cropped_pt_im = cropped_im;
 	cv::imshow("Warped" + stamp, warpedImg);
 }
 

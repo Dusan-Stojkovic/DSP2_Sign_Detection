@@ -46,15 +46,15 @@ public:
 	void parse();
 	void setColorBound(struct color_bound);
 	void setImParse(cv::Mat& im);
-	cv::Mat getCroppedPT();
+	std::vector<cv::Mat> getCroppedPT();
 	
 private:
 	cv::Mat m_boxed_im;
 	cv::Mat m_im;
+	cv::Mat m_contours_im;
 	std::vector<struct color_bound> m_cb;
 	std::vector<cv::Mat1b> m_masks;
-	cv::Mat m_contours_im;
-	cv::Mat m_cropped_pt_im;
+	std::vector<cv::Mat> m_cropped_pt_im;
 
 	void init_params();
 	void mask_im(cv::Mat);

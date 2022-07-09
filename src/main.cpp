@@ -54,6 +54,7 @@ int main()
 	//trackbars must spawn new thread
 	SignDetection det(resized_image);
 	std::thread t(imageProcessingThread, std::ref(det));
+	t.detach();
 
 	cv::Mat new_im;
 	std::vector<std::string> keyboard_input;
@@ -82,9 +83,11 @@ int main()
 		if(keyboard_input[0] == "save")
 		{
 			//write to file trackbar values 
-			cv::Mat s = det.getCroppedPT();
+			std::vector<cv::Mat> s = det.getCroppedPT();
 			//cv::imshow("test", s);
-			cv::imwrite("res.png", s);
+			std::cout << "Saving images " << s.size() <<std::endl;
+			for(int i = 0; i < s.size(); i++)
+				cv::imwrite("saved/res" + std::to_string(i) + ".png", s[i]);
 		}
 		else if(keyboard_input[0] == "load")
 		{ 
@@ -119,6 +122,7 @@ int main()
 		}
 	}while(keyboard_input[0] != "quit");
 
+	cv::destroyAllWindows();
 	return 0;
 }
 
