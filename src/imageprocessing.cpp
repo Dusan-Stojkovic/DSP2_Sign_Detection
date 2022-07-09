@@ -56,6 +56,7 @@ void SignDetection::parse()
 	//hsv transform
 	cv::Mat hsv_im;
 	cv::cvtColor(m_im, hsv_im, cv::COLOR_BGR2HSV);
+	m_boxed_im = m_im.clone();
 	//cv::imshow("hsv test", hsv_im);
 	//cv::moveWindow("hsv test", 0, 0);
 
@@ -85,6 +86,7 @@ void SignDetection::parse()
 	find_contour_masked(m_im);
 
 	cv::imshow("contours", m_contours_im);
+	cv::imshow("boxed", m_boxed_im);
 
 	m_masks.clear();
 }
@@ -251,13 +253,13 @@ void SignDetection::perspective_transform(cv::Mat im, std::vector<cv::Point> app
 	box.points(vertices);
 	for (int i = 0; i < 4; i++)
 	{
-        line(boxed_im, vertices[i], vertices[(i+1)%4], cv::Scalar(0,255,0), 2);
+        line(m_boxed_im, vertices[i], vertices[(i+1)%4], cv::Scalar(0,255,0), 2);
 	}
 
-	line(boxed_im, cv::Point(crop_box.x, crop_box.y), cv::Point(crop_box.x + crop_box.width, crop_box.y), cv::Scalar(0,255,255), 2);
-	line(boxed_im, cv::Point(crop_box.x + crop_box.width, crop_box.y), cv::Point(crop_box.x + crop_box.width, crop_box.y + crop_box.height), cv::Scalar(0,255,255), 2);
-	line(boxed_im, cv::Point(crop_box.x + crop_box.width, crop_box.y + crop_box.height), cv::Point(crop_box.x, crop_box.y + crop_box.height), cv::Scalar(0,255,255), 2);
-	line(boxed_im, cv::Point(crop_box.x, crop_box.y + crop_box.height), cv::Point(crop_box.x, crop_box.y), cv::Scalar(0,255,255), 2);
+	line(m_boxed_im, cv::Point(crop_box.x, crop_box.y), cv::Point(crop_box.x + crop_box.width, crop_box.y), cv::Scalar(0,255,255), 2);
+	line(m_boxed_im, cv::Point(crop_box.x + crop_box.width, crop_box.y), cv::Point(crop_box.x + crop_box.width, crop_box.y + crop_box.height), cv::Scalar(0,255,255), 2);
+	line(m_boxed_im, cv::Point(crop_box.x + crop_box.width, crop_box.y + crop_box.height), cv::Point(crop_box.x, crop_box.y + crop_box.height), cv::Scalar(0,255,255), 2);
+	line(m_boxed_im, cv::Point(crop_box.x, crop_box.y + crop_box.height), cv::Point(crop_box.x, crop_box.y), cv::Scalar(0,255,255), 2);
 
 	std::vector<std::vector<cv::Point>> curves;
 	curves.push_back(approx_curve);
@@ -270,7 +272,6 @@ void SignDetection::perspective_transform(cv::Mat im, std::vector<cv::Point> app
 	
 	cropped_im = cropped_im(crop_box);
 
-	cv::imshow("boxed" + stamp, boxed_im);
 	cv::imshow("cropped" + stamp, cropped_im);
 
 	std::vector<cv::Point2f> src;

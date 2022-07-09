@@ -49,6 +49,7 @@ public:
 	cv::Mat getCroppedPT();
 	
 private:
+	cv::Mat m_boxed_im;
 	cv::Mat m_im;
 	std::vector<struct color_bound> m_cb;
 	std::vector<cv::Mat1b> m_masks;
