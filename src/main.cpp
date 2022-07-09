@@ -39,7 +39,7 @@ int main()
 	cv::Mat image, resized_image;
 
 	//Load image
-	std::string loaded_im = "data/multiple_signs.png";
+	std::string loaded_im = "data/jednosmerna.png";
 	image = cv::imread(loaded_im);
 	long size;
 
