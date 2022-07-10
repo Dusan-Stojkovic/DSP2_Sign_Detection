@@ -53,17 +53,21 @@ std::vector<cv::Mat> SignDetection::getCroppedPT()
 void SignDetection::parse()
 {
 	//destroy windows
-	for(int i = 0; i < 4; i++)
+	try
 	{
-		for(int j = 0; j < m_cropped_pt_im.size(); j++)
+		for(int i = 0; i < 4; i++)
 		{
-			std::string tag1 = std::to_string(i) + std::to_string(j);
-			std::string tag2 = std::to_string(i);
-			cv::destroyWindow("Warped" + tag1);
-			cv::destroyWindow("cropped" + tag2);
+			for(int j = 0; j < m_cropped_pt_im.size(); j++)
+			{
+				std::string tag1 = std::to_string(i) + std::to_string(j);
+				std::string tag2 = std::to_string(i);
+				cv::destroyWindow("Warped" + tag1);
+				cv::destroyWindow("cropped" + tag2);
+			}
 		}
+		cv::destroyWindow("boxed");
 	}
-	cv::destroyWindow("boxed");
+	catch(cv::Exception& e) { }
 
 	//prepare to process
 	m_masks.clear();
