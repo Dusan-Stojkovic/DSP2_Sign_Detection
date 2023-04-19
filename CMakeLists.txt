@@ -5,11 +5,13 @@ find_package (Threads )
 
 set( NAME_SRC
     src/main.cpp
-	src/imageprocessing.cpp
+    src/imageprocessing.cpp
+    src/messagequeue.cpp
 )
 
 set( NAME_HEADERS       
      include/imageprocessing.hpp
+     include/messagequeue.hpp
 )
 
 INCLUDE_DIRECTORIES( ${CMAKE_CURRENT_SOURCE_DIR}/include )

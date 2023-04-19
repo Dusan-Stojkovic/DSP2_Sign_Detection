@@ -1,10 +1,9 @@
 
-#include <thread>
 #include <iostream>
-#include "imageprocessing.hpp"
-#include "opencv2/core/core.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
+#include "imageprocessing.hpp"
+#include "messagequeue.hpp"
 
 //to draw trackbar set to 1
 #define DRAW_T_HSV_R 1
@@ -30,99 +29,46 @@ static void onChangeYellow(int i, void* sd);
 	
 void imageProcessingThread(SignDetection&);
 
+enum
+{
+	IMAGE_SHOW
+};
+
+void imageProcessingMQThread(MessageQueue&);
+
 cv::Mat resize(long size, cv::Mat image);
 
 int main()
 {
-	//Variable setup
-	std::cout << "Sign image processing..\n";
-	cv::Mat image, resized_image;
+	MessageQueue MQ;
+	std::cout << "Message queue created.\n";
 
-	//Load image
-	std::string loaded_im = "data/jednosmerna.png";
-	image = cv::imread(loaded_im);
-	long size;
-
-	//Resize for better performance
-	size = image.size().width * image.size().height;
-
-	resized_image = resize(size, image);
+	MQ.enable(true);
+	std::cout << "Message queue enabled.\n";
 	
-
-	//Display result
-	//cv::imshow("resized test", resized_image);
-	//trackbars must spawn new thread
-	SignDetection det(resized_image);
-	std::thread t(imageProcessingThread, std::ref(det));
+	std::thread t(imageProcessingMQThread, std::ref(MQ));
 	t.detach();
 
-	cv::Mat new_im;
-	std::vector<std::string> keyboard_input;
-	std::string word;
-	std::string delim = ">>";
-	std::cout << "Command REPL started. Write help for detalis.\n";
-	do
-	{
-		keyboard_input.clear();
-		//std::cout << delim;
-		do
-		{ 
-			std::cin >> word;
-			keyboard_input.push_back(word);
-		}while(word[word.size() - 1] != ';');
-	 	keyboard_input[keyboard_input.size() - 1] = word.substr(0, word.size() - 1);
+	cv::VideoCapture camera(0);
+    if (!camera.isOpened()) {
+        std::cerr << "ERROR: Could not open camera" << std::endl;
+        return 1;
+    }
 
-		//echo
-		for(int i = 0; i < keyboard_input.size(); i++)
-		{
-			std::cout << keyboard_input[i] << " ";
-		}
-		std::cout << "\n";
+    // this will contain the image from the webcam
+    cv::Mat frame;
+    
+    // display the frame until you press a key
+	std::cout << "Starting webcam capture...\n";
+    while (1) {
+    	// capture the next frame from the webcam
+    	camera >> frame;
 
+		Message m(IMAGE_SHOW, PROCESSED, &frame);
 
-		if(keyboard_input[0] == "save")
-		{
-			//write to file trackbar values 
-			std::vector<cv::Mat> s = det.getCroppedPT();
-			//cv::imshow("test", s);
-			std::cout << "Saving images " << s.size() <<std::endl;
-			for(int i = 0; i < s.size(); i++)
-				cv::imwrite("saved/res" + std::to_string(i) + ".png", s[i]);
-		}
-		else if(keyboard_input[0] == "load")
-		{ 
-			//try to load selected im
-			new_im = cv::imread(keyboard_input[1]);
-			if(new_im.rows == 0 || new_im.cols == 0)
-			{
-				std::cout << "imread failed: no such file or directory!\n";
-			}
-			else
-			{
-				std::cout << "image: " << keyboard_input[1] << " loaded. \n";
-				size = new_im.size().width * new_im.size().height;
-				resized_image = resize(size, new_im);
-				det.setImParse(resized_image);
-			}
-		}
-		else if(keyboard_input[0] == "help")
-		{
-			std::cout << "List of commands:\n"
-					  << "save - save extracted sign from image.\n"
-					  << "quit - exit app.\n"
-					  << "load path/to/im.png - read image from file.\n";
-		}
-		else if(keyboard_input[0] == "display")
-		{
-			if(keyboard_input[1] == "t_red")
-			{
-				//TODO show red trackbars
-				std::cout << "Not implemented yet.\n";
-			}
-		}
-	}while(keyboard_input[0] != "quit");
+		MQ.postMessage(&m);
+    }
 
-	cv::destroyAllWindows();
 	return 0;
 }
 
@@ -226,6 +172,27 @@ void imageProcessingThread(SignDetection& det)
 
 	cv::waitKey(0);
 } 
+
+void imageProcessingMQThread(MessageQueue& MQ)
+{
+    // create a window to display the images from the webcam
+    cv::namedWindow("Webcam", cv::WINDOW_AUTOSIZE);
+
+	Message m;
+	while(1)
+	{
+		//Read enqueued message
+		if (MQ.getNextMessage(&m, true))
+		{
+			//Parse enqueued message
+			if (m.id == IMAGE_SHOW)
+			{
+        		cv::imshow("Webcam", m.getImage());
+				cv::waitKey(1);
+			}
+		}
+	}
+}
 
 static void onChangeRed(int i,void* sd){
 	int hue_l, value_l, saturation_l;
